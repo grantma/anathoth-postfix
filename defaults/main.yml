@@ -6,8 +6,8 @@ postfix_install:
   - libsasl2-2
   - sasl2-bin
   - libsasl2-modules
+postfix_mailname: "{{ ansible_hostname }}.{{dns_domainname}}"
 postfix_hostname: "{{ ansible_fqdn }}"
-postfix_mailname: "{{ ansible_fqdn }}"
 postfix_aliases: []
 postfix_virtual_aliases: []
 postfix_sender_canonical_maps: []
@@ -24,6 +24,7 @@ postfix_inet_interfaces: all
 postfix_inet_protocols: all
 postfix_mydestination:
   - "{{ postfix_hostname }}"
+  - "{{ postfix_mailname }}"
   - localdomain
   - localhost
   - localhost.localdomain
@@ -34,3 +35,9 @@ postfix_mynetworks:
 postfix_smtpd_banner: '$myhostname ESMTP $mail_name (Ubuntu)'
 postfix_disable_vrfy_command: false
 postfix_message_size_limit: 10240000
+postfix_delay_warning_time: false
+postfix_smtpd_use_tls: may
+postfix_smtp_use_tls: may
+postfix_smtpd_tls_cert_file: '/etc/ssl/certs/ssl-cert-snakeoil.pem'
+postfix_smtpd_tls_key_file: '/etc/ssl/private/ssl-cert-snakeoil.key'
+

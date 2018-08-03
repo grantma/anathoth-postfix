@@ -15,20 +15,7 @@
 - name: postmap generic
   command: postmap hash:/etc/postfix/generic
 
-- name: restart postfix
-  command: /bin/true
-  notify:
-    - remove pid
-    - restart service
-
-- name: remove pid
-  file:
-    path: "~postfix/pid/master.pid"
-    state: absent
-  when: is_docker_guest
-
-- name: restart service
+- name: reconfig postfix
   service:
     name: postfix
-    state: restarted
-  when: service_default_state | default('started') == 'started'
+    state: reloaded

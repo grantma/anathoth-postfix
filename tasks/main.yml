@@ -1,13 +1,5 @@
 # tasks file for postfix
 ---
-- name: facts | set
-  set_fact:
-     is_docker_guest: "{{ ansible_virtualization_role | default('host') == 'guest' and ansible_virtualization_type | default('none') == 'docker' }}"
-  tags:
-    - configuration
-    - postfix
-    - postfix-facts
-
 - name: configure debconf
   debconf:
     name: "{{ item.name }}"
@@ -16,7 +8,7 @@
     vtype: "{{ item.vtype }}"
   with_items: "{{ postfix_debconf_selections }}"
   tags:
-    - configuration
+    - postfix-config
     - postfix
     - postfix-install
 
@@ -28,7 +20,7 @@
     cache_valid_time: "{{ apt_update_cache_valid_time | default(3600) }}"
   with_items: "{{ postfix_install }}"
   tags:
-    - configuration
+    - postfix-config
     - postfix
     - postfix-install
 
@@ -39,24 +31,14 @@
     owner: root
     group: root
     mode: 0644
-  notify: restart postfix
+  notify: reconfig postfix
   tags:
-    - configuration
+    - postfix-config
     - postfix
     - postfix-mailname
 
-- name: update configuration file
-  template:
-    src: etc/postfix/main.cf.j2
-    dest: /etc/postfix/main.cf
-    owner: root
-    group: root
-    mode: 0644
-  notify: restart postfix
-  tags:
-    - configuration
-    - postfix
-    - postfix-configuration
+# Include main.cf task file
+- include: main-cf.yml
 
 - name: configure sasl username/password
   template:
@@ -69,9 +51,9 @@
   no_log: true
   notify:
     - postmap sasl_passwd
-    - restart postfix
+    - reconfig postfix
   tags:
-    - configuration
+    - postfix-config
     - postfix
     - postfix-sasl-passwd
 
@@ -88,9 +70,8 @@
   with_items: "{{ postfix_aliases }}"
   notify:
     - new aliases
-    - restart postfix
   tags:
-    - configuration
+    - postfix-config
     - postfix
     - postfix-aliases
 
@@ -107,9 +88,8 @@
   with_items: "{{ postfix_virtual_aliases }}"
   notify:
     - new virtual aliases
-    - restart postfix
   tags:
-    - configuration
+    - postfix-config
     - postfix
     - postfix-virtual-aliases
 
@@ -126,9 +106,8 @@
   with_items: "{{ postfix_sender_canonical_maps }}"
   notify:
     - postmap sender_canonical_maps
-    - restart postfix
   tags:
-    - configuration
+    - postfix-config
     - postfix
     - postfix-sender-canonical-maps
 
@@ -145,18 +124,8 @@
   with_items: "{{ postfix_generic }}"
   notify:
     - postmap generic
-    - restart postfix
   tags:
-    - configuration
+    - postfix-config
     - postfix
     - postfix-generic-table
 
-- name: start and enable service
-  service:
-    name: postfix
-    state: "{{ service_default_state | default('started') }}"
-    enabled: "{{ service_default_enabled | default(true) | bool }}"
-  tags:
-    - configuration
-    - postfix
-    - postfix-start-enable-service

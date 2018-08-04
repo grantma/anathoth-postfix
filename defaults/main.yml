@@ -32,9 +32,7 @@ postfix_inet_protocols: all
 postfix_mydestination:
   - "{{ postfix_hostname }}"
   - "{{ postfix_mailname }}"
-  - localdomain
   - localhost
-  - localhost.localdomain
 postfix_lonetworks:
   - 127.0.0.0/8
   - '[::ffff:127.0.0.0]/104'

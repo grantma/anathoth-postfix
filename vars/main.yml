@@ -34,7 +34,7 @@ postfix_maincf_settings_internal:
   - name: myhostname
     value: "{{ postfix_hostname }}"
   - name: mynetworks
-    value: "{{ postfix_mynetworks | join(' ') }}"
+    value: "{{ (postfix_mynetworks + postfix_lonetworks) | join(' ') }}"
   - name: myorigin
     value: "/etc/mailname"
   - name: recipient_delimiter

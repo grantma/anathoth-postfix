@@ -9,6 +9,11 @@ postfix_install:
 postfix_mailname: "{{ ansible_hostname }}.{{dns_domainname}}"
 postfix_hostname: "{{ ansible_fqdn }}"
 postfix_aliases: []
+postfix_admin_aliases:
+  - user: root
+    alias: "admin@{{ dns_domainname }}"
+  - user: staff
+    alias: "admin@{{ dns_domainname }}"
 postfix_virtual_aliases: []
 postfix_sender_canonical_maps: []
 postfix_sasl_password_maps: []
@@ -30,10 +35,11 @@ postfix_mydestination:
   - localdomain
   - localhost
   - localhost.localdomain
-postfix_mynetworks:
+postfix_lonetworks:
   - 127.0.0.0/8
   - '[::ffff:127.0.0.0]/104'
   - '[::1]/128'
+postfix_mynetworks: []
 postfix_smtpd_banner: '$myhostname ESMTP $mail_name (Ubuntu)'
 postfix_disable_vrfy_command: false
 postfix_message_size_limit: 10240000

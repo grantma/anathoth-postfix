@@ -59,7 +59,51 @@
     - postfix
     - postfix-sasl-passwd
 
-- name: configure aliases
+- name: stat /etc/aliases file to detect size
+  stat:
+    path: /etc/aliases
+  register: postfix_stat_etc_aliases
+  changed_when: False
+  tags:
+    - postfix-config
+    - postfix
+    - postfix-install
+
+- name: seed /etc/aliases file
+  copy:
+    src: etc/aliases
+    dest: /etc/aliases
+    owner: root
+    group: root
+    mode: 0644
+  when: postfix_result_install.changed and postfix_stat_etc_aliases.stat.size <= 250
+  notify:
+    - new aliases
+  tags:
+    - postfix-config
+    - postfix
+    - postfix-install
+
+- name: configure root, staff admin /etc/aliases 
+  lineinfile:
+    dest: /etc/aliases
+    regexp: '^{{ item.user }}:.*'
+    line: '{{ item.user }}: {{ item.alias }}'
+    owner: root
+    group: root
+    mode: 0644
+    create: true
+    state: "{{ item.state|d('present') }}"
+  with_items: "{{ postfix_admin_aliases }}"
+  notify:
+    - new aliases
+  tags:
+    - postfix-config
+    - postfix
+    - postfix-install
+    - postfix-aliases
+  
+- name: configure extra aliases
   lineinfile:
     dest: /etc/aliases
     regexp: '^{{ item.user }}:.*'

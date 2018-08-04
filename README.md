@@ -1,6 +1,10 @@
 ## postfix
 
-Set up a postfix server in Debian-like systems.
+Set up a postfix server in Debian-like systems. Based on (https://github.com/Oefenweb/ansible-postfix)
+
+Refactored for Debian and Ubuntu full mail servers.  Docker support removed.  Cleaned up to work far better with postfix, configuring directly via postconf now. No more main.cf template file.  Also seeds /etc/aliases.  
+
+Planning to add master.cf support for running cyrus, dovecote, amavid etc. Mailertable routing etc also planned.
 
 #### Requirements
 

@@ -12,13 +12,13 @@
     - postfix
     - postfix-install
 
-- name: install package
+- name: install packages
   apt:
     name: "{{ item }}"
     state: "{{ apt_install_state | default('latest') }}"
-    update_cache: true
-    cache_valid_time: "{{ apt_update_cache_valid_time | default(3600) }}"
+    update_cache: false
   with_items: "{{ postfix_install }}"
+  register: postfix_result_install
   tags:
     - postfix-config
     - postfix
@@ -40,18 +40,21 @@
 # Include main.cf task file
 - include: main-cf.yml
 
-- name: configure sasl username/password
-  template:
-    src: etc/postfix/sasl_passwd.j2
-    dest: /etc/postfix/sasl_passwd
+- name: configure sasl username/password maps
+  lineinfile:
+    dest: /etc/postfix/sasl_password_maps
+    regexp: '^{{ item.site }}:.*'
+    line: '{{ item.site }}: {{ item.credentials }}'
     owner: root
     group: root
     mode: 0600
-  when: postfix_relayhost != false
+    create: true
+    state: present
+  with_items: "{{ postfix_sasl_password_maps_all }}"
+  when: not item.state|d() or item.state == 'present'
   no_log: true
   notify:
-    - postmap sasl_passwd
-    - reconfig postfix
+    - postmap sasl_password_maps
   tags:
     - postfix-config
     - postfix
@@ -68,6 +71,7 @@
     create: true
     state: present
   with_items: "{{ postfix_aliases }}"
+  when: not item.state|d() or item.state == 'present'
   notify:
     - new aliases
   tags:
@@ -86,6 +90,7 @@
     create: true
     state: present
   with_items: "{{ postfix_virtual_aliases }}"
+  when: not item.state|d() or item.state == 'present'
   notify:
     - new virtual aliases
   tags:
@@ -104,6 +109,7 @@
     create: true
     state: present
   with_items: "{{ postfix_sender_canonical_maps }}"
+  when: not item.state|d() or item.state == 'present'
   notify:
     - postmap sender_canonical_maps
   tags:
@@ -122,6 +128,7 @@
     create: true
     state: present
   with_items: "{{ postfix_generic }}"
+  when: not item.state|d() or item.state == 'present'
   notify:
     - postmap generic
   tags:

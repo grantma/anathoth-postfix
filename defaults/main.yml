@@ -11,15 +11,17 @@ postfix_hostname: "{{ ansible_fqdn }}"
 postfix_aliases: []
 postfix_virtual_aliases: []
 postfix_sender_canonical_maps: []
+postfix_sasl_password_maps: []
 postfix_generic: []
 postfix_relayhost: false
 postfix_relayhost_port: 587
 postfix_relaytls: false
-postfix_sasl_auth_enable: true
-postfix_sasl_user: "postmaster@{{ ansible_domain }}"
-postfix_sasl_password: 'k8+haga4@#pR'
-postfix_sasl_security_options: noanonymous
-postfix_sasl_mechanism_filter: ''
+postfix_relay_sasl_user: "postmaster@{{ ansible_domain }}"
+postfix_relay_sasl_password: 'SuperSillySecret'
+postfix_smtp_sasl_auth_enable: true
+postfix_smtp_sasl_security_options: noanonymous
+postfix_smtp_sasl_mechanism_filter: ''
+postfix_smtpd_relay_restrictions: ''
 postfix_inet_interfaces: all
 postfix_inet_protocols: all
 postfix_mydestination:
@@ -36,8 +38,8 @@ postfix_smtpd_banner: '$myhostname ESMTP $mail_name (Ubuntu)'
 postfix_disable_vrfy_command: false
 postfix_message_size_limit: 10240000
 postfix_delay_warning_time: false
-postfix_smtpd_use_tls: may
-postfix_smtp_use_tls: may
+postfix_smtpd_tls_security_level: may
+postfix_smtp_tls_security_level: may
 postfix_smtpd_tls_cert_file: '/etc/ssl/certs/ssl-cert-snakeoil.pem'
 postfix_smtpd_tls_key_file: '/etc/ssl/private/ssl-cert-snakeoil.key'
-
+postfix_maincf_settings_extra: []

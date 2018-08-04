@@ -1,0 +1,44 @@
+- name: copy Debian base main.cf
+  template:
+    src: etc/postfix/main.cf.j2
+    dest: /etc/postfix/main.cf
+    owner: root
+    group: root
+    mode: 0644
+  when: postfix_result_install.changed
+  notify: reconfig postfix
+  tags:
+    - postfix
+    - postfix-config
+    - postfix-install
+
+- name: list postconf maincf settings one
+  shell: postconf | grep -v ^process_id
+  register: postfix_postconf_list1
+  changed_when: False
+  tags: 
+    - postfix
+    - postfix-config
+    - postfix-install
+
+- name: set postconf information
+  command: postconf -pe "{{ item.name }}={{ item.value }}"
+  with_items: "{{ postfix_maincf_settings }}"
+  when: not item.state|d() or item.state == 'present'
+  changed_when: False
+  tags:
+    - postfix
+    - postfix-config
+    - postfix-install
+
+- name: reconfigure postfix
+  shell: postconf | grep -v ^process_id
+  register: postfix_postconf_list2
+  changed_when: postfix_postconf_list1.stdout != postfix_postconf_list2.stdout
+  notify: reconfig postfix
+  tags: 
+    - postfix
+    - postfix-config
+    - postfix-install
+
+

@@ -1,60 +1,97 @@
 # vars file for postfix
 ---
 postfix_debconf_selections:
- - name: postfix
-   question: postfix/main_mailer_type
-   value: No configuration
-   vtype: select
+  - name: postfix
+    question: postfix/main_mailer_type
+    value: No configuration
+    vtype: select
 
-postfix_maincf_settings:
- - name: alias_maps
-   value: "hash:/etc/aliases"
- - name: delay_warning_time
-   value: {{ postfix_delay_warning_time }}
-   state: "{{ 'present' if ( postfix_delay_warning_time ) else 'absent' }}"
- - name: inet_protocols
-   value: "{{ postfix_inet_protocols }}"
- - name: inet_interfaces
-   value: "{{ postfix_inet_interfaces }}"
- - name: mailbox_size_limit
-   value: 0
- - name: mydestination
-   value: "{{ postfix_mydestination | join(', ') }}"
- - name: myhostname
-   value: "{{ postfix_hostname }}"
- - name: mynetworks
-   value: "{{ postfix_mynetworks | join(' ') }}"
- - name: myorigin
-   value: "/etc/mailname"
- - name: recipient_delimiter
-   value: '+'
- - name: relayhost
-   value: "[{{ postfix_relayhost }}]:{{ postfix_relayhost_port }}"
-   state: "{{ 'present' if ( postfix_relayhost) else 'absent' }}"
- - name: sender_canonical_maps
-   value: "{{ hash:/etc/postfix/sender_canonical_maps }}"
-   state: "{{'present' if postfix_sender_canonical_maps else 'absent' }}"
- - name: smtp_generic_maps
-   value: "{{ hash:/etc/postfix/generic }}"
-   state: "{{'present' if postfix_generic else 'absent' }}"
- - name: smtp_tls_session_cache_database
-   value: 'btree:${data_directory}/smtp_scache'
- - name: smtpd_banner
-   value: "{{ postfix_smtpd_banner }}"
- - name: smtpd_tls_cert_file
-   value: "{{ postfix_smtpd_tls_cert_file }}"
-   state: "{{ 'present' if (postfix_smtpd_use_tls and postfix_smtpd_use_tls != 'none'
-                ) else 'absent' }}"
- - name: smtpd_tls_key_file
-   value: "{{ postfix_smtpd_tls_key_file }}"
-   state: "{{ 'present' if (postfix_smtpd_use_tls and postfix_smtpd_use_tls != 'none'
-                ) else 'absent' }}"
- - name: smtpd_use_tls
-   value: "{{ postfix_smtpd_use_tls }}"
- - name: smtp_use_tls
-   value: "{{ postfix_smtp_use_tls }}"
- - name: smtpd_tls_session_cache_database
-   value: 'btree:${data_directory}/smtpd_scache'
- - name: virtual_alias_maps
-   value: "{{ hash:/etc/postfix/virtual }}"
-   state: "{{'present' if postfix_virtual_aliases else 'absent' }}"
+postfix_sasl_relay_password_entry:
+  - site: "[{{ postfix_relayhost }}]:{{ postfix_relayhost_port }}"
+    credentials: "{{ postfix_relay_sasl_user }}:{{ postfix_relay_sasl_password }}"
+    state: "{{ 'present' if postfix_relay_sasl_password else 'absent' }}"
+ 
+postfix_sasl_password_maps_all: "{{ postfix_sasl_relay_password_entry | union (postfix_sasl_password_maps) }}"
+
+postfix_maincf_settings_internal:
+  - name: alias_maps
+    value: "hash:/etc/aliases"
+  - name: delay_warning_time
+    value: "{{ postfix_delay_warning_time }}"
+    state: "{{ 'present' if ( postfix_delay_warning_time ) else 'absent' }}"
+  - name: disable_vrfy_command
+    value: "{{ postfix_disable_vrfy_command | bool | ternary('yes', 'no') }}"
+  - name: inet_protocols
+    value: "{{ postfix_inet_protocols }}"
+  - name: inet_interfaces
+    value: "{{ postfix_inet_interfaces }}"
+  - name: mailbox_size_limit
+    value: 0
+  - name: message_size_limit
+    value: "{{ postfix_message_size_limit }}"
+  - name: mydestination
+    value: "{{ postfix_mydestination | join(', ') }}"
+  - name: myhostname
+    value: "{{ postfix_hostname }}"
+  - name: mynetworks
+    value: "{{ postfix_mynetworks | join(' ') }}"
+  - name: myorigin
+    value: "/etc/mailname"
+  - name: recipient_delimiter
+    value: '+'
+  - name: relayhost
+    value: "[{{ postfix_relayhost }}]:{{ postfix_relayhost_port }}"
+    state: "{{ 'present' if ( postfix_relayhost) else 'absent' }}"
+  - name: sender_canonical_maps
+    value: "hash:/etc/postfix/sender_canonical_maps"
+    state: "{{'present' if postfix_sender_canonical_maps else 'absent' }}"
+  - name: smtp_generic_maps
+    value: "hash:/etc/postfix/generic"
+    state: "{{'present' if postfix_generic else 'absent' }}"
+  - name: smtp_sasl_auth_enable
+    value: "{{ postfix_smtp_sasl_auth_enable | bool | ternary('yes', 'no') }}"
+    state: "{{ 'present' if postfix_smtp_sasl_auth_enable else 'absent' }}"
+  - name: smtp_sasl_mechanism_filter
+    value: "{{ postfix_smtp_sasl_mechanism_filter }}"
+    state: "{{ 'present' if postfix_smtp_sasl_auth_enable else 'absent' }}"
+  - name: smtp_sasl_password_maps
+    value: "hash:/etc/postfix/sasl_password_maps"
+    state: "{{ 'present' if postfix_smtp_sasl_auth_enable else 'absent' }}"
+  - name: smtp_sasl_security_options
+    value: "{{ postfix_smtp_sasl_security_options }}"
+    state: "{{ 'present' if postfix_smtp_sasl_auth_enable else 'absent' }}"
+  - name: smtp_tls_note_starttls_offer
+    value: "yes"
+    state: "{{ 'present' if postfix_relaytls else 'absent' }}"
+  - name: smtp_tls_session_cache_database
+    value: 'btree:${data_directory}/smtp_scache'
+  - name: smtp_tls_security_level
+    value: "{{ postfix_smtp_tls_security_level }}"
+    state: "{{ 'present' if not postfix_relaytls else 'absent' }}"
+  - name: smtp_tls_security_level
+    value: "encrypt"
+    state: "{{ 'present' if postfix_relaytls else 'absent' }}"
+  - name: smtpd_banner
+    value: "{{ postfix_smtpd_banner }}"
+  - name: smtpd_relay_restrictions
+    value: "{{ postfix_smtpd_relay_restrictions | join(', ') }}"
+    state: "{{ 'present' if (postfix_smtpd_relay_restrictions|d()) else 'absent' }}"
+  - name: smtpd_tls_cert_file
+    value: "{{ postfix_smtpd_tls_cert_file }}"
+    state: "{{ 'present' if (postfix_smtpd_tls_security_level
+                and postfix_smtpd_tls_security_level != 'none'
+                 ) else 'absent' }}"
+  - name: smtpd_tls_key_file
+    value: "{{ postfix_smtpd_tls_key_file }}"
+    state: "{{ 'present' if (postfix_smtpd_tls_security_level
+                and postfix_smtpd_tls_security_level != 'none'
+                 ) else 'absent' }}"
+  - name: smtpd_tls_security_level
+    value: "{{ postfix_smtpd_tls_security_level }}"
+  - name: smtpd_tls_session_cache_database
+    value: 'btree:${data_directory}/smtpd_scache'
+  - name: virtual_alias_maps
+    value: "hash:/etc/postfix/virtual"
+    state: "{{'present' if postfix_virtual_aliases else 'absent' }}"
+
+postfix_maincf_settings: "{{ postfix_maincf_settings_internal | union(postfix_maincf_settings_extra) }}"

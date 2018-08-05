@@ -31,14 +31,22 @@
     - postfix-config
     - postfix-install
 
-- name: reconfigure postfix
+- name: check syntax and possibly reconfigure postfix
   shell: postconf | grep -v ^process_id
   register: postfix_postconf_list2
   changed_when: postfix_postconf_list1.stdout != postfix_postconf_list2.stdout
+  register: postfix_postconf_list2
   notify: reconfig postfix
   tags: 
     - postfix
     - postfix-config
     - postfix-install
 
-
+- name: Check postconf warnings 
+  fail:
+    msg: "{{ postfix_postconf_list2.stderr }}"
+  when: postfix_postconf_list2.stderr
+  tags: 
+    - postfix
+    - postfix-config
+    - postfix-install
